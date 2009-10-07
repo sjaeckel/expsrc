@@ -77,7 +77,7 @@ for h in `find . -name .gitmodules`; do
   rm -rf $h
 done
 
-filesToParse=`find . -name *.h -type f`
+filesToParse=`find * -type f`
 
 TEMPFILE="$TMP/tmp.$$"
 
