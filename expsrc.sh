@@ -61,7 +61,8 @@ mkdir -p $outFolder
 subModules=`git submodule | awk '{print $2}'`
 
 for s in $subModules; do
-  $THIS "${outFolder}/${s}" "${PWD}/${s}"
+  test -n "$(echo ${s} | grep "expsrc")" ||
+    $THIS "${outFolder}/${s}" "${PWD}/${s}"
 done
 
 cp --parents `git ls-files` $outFolder
