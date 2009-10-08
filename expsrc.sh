@@ -143,7 +143,7 @@ for i in $filesToParse; do
     fi
     
     git show HEAD:"${i}" 2>/dev/null | \
-      sed -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
+      sed -c -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
         "${outFolder}/${i}"
   fi
 done
