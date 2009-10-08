@@ -91,10 +91,6 @@ fi
 # get version string
 git_version=`git describe --tags --always`
 
-# check if the working tree is clean, if not add "-dirty" to versionstring
-test -z "$(git diff-index --name-only HEAD --)" ||
-  git_version="${git_version}-dirty"
-
 # choose folder where to put output data
 case "$#" in
   2|1)
