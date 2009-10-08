@@ -128,12 +128,6 @@ if [ "$#" != "2" ]; then
 fi
 echo "Generating version: $git_version"
 
-# create subdirectories that will be filled in the next step, but since I will not be exported, not for me
-for d in `ls -R | grep ":$" | sed -e 's/:$//' -e 's/^.//' -e 's/^\///' | grep -v "expsrc"`; do
-  test -n "$(echo ${s} | grep "expsrc\/")" ||
-    mkdir -p "${outFolder}/${d}" 2>/dev/null
-done
-
 # this will be the revision that is inserted in the files
 REVSTRING="Revision: ${git_version}"
 
@@ -142,7 +136,12 @@ filesToParse=`git ls-files`
 
 # read these files directly out of the repository and parse them to their destination
 for i in $filesToParse; do
-  if ([ ! -n "$(echo ${i} | grep "expsrc")" ] && [ ! -e "${outFolder}/${i}" ]); then
+  if [ ! -n "$(echo ${i} | grep "expsrc")" ] && [ ! -d "${i%}" ]; then
+    # check if we must generate directory before
+    if [ -d "${i%/*}" ] && [ ! -e "${outFolder}/${i%/*}" ]; then
+      mkdir -p "${outFolder}/${i%/*}"
+    fi
+    
     git show HEAD:"${i}" 2>/dev/null | \
       sed -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
         "${outFolder}/${i}"
