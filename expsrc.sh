@@ -11,29 +11,70 @@ _usage()
 	echo "This script exports the source of a repository with revision string in the code"
 	echo -e
 	echo -e "Usage: ${0##*/}[options] <destination> <source>"
-	echo -e "\t-i|--repo\tBase directory of the repository to export"
-	echo -e "\t-o|--output\tDirectory where to output the files"
-  echo -e "\t-h|--help\tThis help"
+  echo
+	echo -e "\t-i"
+  echo -e "\t--repo\t\tBase directory of the repository to export"
+  echo
+	echo -e "\t-o"
+  echo -e "\t--output\tDirectory where to output the files"
+  echo
+	echo -e "\t-p"
+  echo -e "\t--parse\t\tFile to parse for the revision tag."
+  echo -e "\t\t\tA pattern of files to parse. If this option is not given,"
+  echo -e "\t\t\ttags in all files are replaced. Example option would be -p *.c parses"
+  echo -e "\t\t\tonly tags in *.c files. This option must be passed for every type of file"
+  echo
+  echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
+  echo
+  echo -e "\t-h"
+  echo
+  echo -e "\t--help\tThis help"
+  echo
+  echo -e "<destination> and <source> are optional. The options -i, --repo or -o, --output are"
+  echo -e "not taken in account, when the output directories are specified"
+  
 	exit -1
 }
 
+#-------------------------------------------------------------------------------
+# Checks the parameter whether it is valid and sets the corresponding global
+# variables
+#
+# @param 1  Verbosity level 1 ... 5
+# @param 2  Color of the text
+# @param 3 and following  The text to output
+# @return   check_params_ret set to the number of values that this option
+#           "consumed" including the option specifier.
+#-------------------------------------------------------------------------------
 _colored_echo()
 {
 
-  if [ $# -lt  2 ]
+  if [ $# -lt  3 ]
   then
     echo "error in function _colored_echo ... to few arguments."
-    exit -1
-  fi  
+    return
+  fi
+  
+  #if an verbosity level is passed then check against the given level
+  if [ $verb_level -lt $1 ]
+  then
+    return
+  fi
+  
+  #Check if the verbosity level is 0, then no output is generated at all
+  if [ $verb_level -eq 0 ]
+  then
+    return
+  fi
   
   #the text color
-  color=$1
+  color=$2
   
   shift 1
   local cei=1
   cepasses=$#
 
-  #check which color was used snd set it
+  #check which color was used and set it
   case $color in
     "black")        echo -e -n "\033[47;30m" ;;
     "red")          echo -e -n "\033[1;40;31m" ;;
@@ -50,7 +91,7 @@ _colored_echo()
    while [ $cei -le $cepasses ]
    do
     #print the given text
-    echo -n "$1 "
+    echo -n "$2 "
     cei=$((cei+1))
     #  in den nächsten Parameter springen
         shift        
@@ -60,6 +101,15 @@ _colored_echo()
   echo
 }
 
+#-------------------------------------------------------------------------------
+# Checks the parameter whether it is valid and sets the corresponding global
+# variables
+#
+# @param 1  Option specifier such as '-h', '--repo' anything else
+# @param 2  Option value
+# @return   check_params_ret set to the number of values that this option
+#           "consumed" including the option specifier.
+#-------------------------------------------------------------------------------
 _check_params()
 {
 	option=$1	
@@ -71,10 +121,6 @@ _check_params()
 		"--help")
 						_usage
 						exit 0;;
-		"-p")
-						echo "-p option"
-						check_params_ret=2;;
-            
     "-i")
             inFolder="$2"
             check_params_ret=2;;
@@ -88,8 +134,16 @@ _check_params()
     "-output")
             outFolder="$2"
             check_params_ret=2;;
+            
+    "-p")
+            arr_parseFiles[${#arr_parseFiles[*]}]="$2"
+            check_params_ret=2;;
+    "-v")
+            verb_level="$2"
+            check_params_ret=2;;
+            
 		*)				
-						_colored_echo red Unknown option $1
+						_colored_echo 1 red Unknown option $1
 						_usage
 						exit -1;;
 	esac
@@ -99,15 +153,36 @@ _check_params()
 #-------------------------------------------------------------------------------
 # This function checks, whether the given file should be parsed or not
 #
-# @param   1 name of the file to check against the patter
+# @param   1 name of the file to check against the pattern
 # @return  check_parse_ret set to 1, when the file is to be parsed, otherwise
 #          set to 0
 #-------------------------------------------------------------------------------
 _check_parse()
 {
-  
-  
-  check_parse_ret=0
+  # Check whether the arrays of patterns is set. If so, the file name
+  # must be found in the array in order to be parsed.
+  # If the array is empty, all files will be parsed
+  if [ ${#arr_parseFiles[*]} -gt 0 ]
+  then
+    check_parse_ret=0
+    
+    # Iterate through array and check whether the file name matches
+    local i
+    for i in "${arr_parseFiles[@]}"
+    do
+       :
+       if [[ $1 == $i ]]
+       then
+         check_parse_ret=1
+         _colored_echo 5 blue "File $1 will be parsed"
+       else
+        _colored_echo 5 blue "Skip parsing of file $1"
+       fi
+    done
+  else
+    # Parse pattern array is empty, therefore all files are parsed
+    check_parse_ret=1
+  fi
 }
 
 ###############################################################################
@@ -128,12 +203,12 @@ inFolder=
 # output directory
 outFolder=
 
-
 # array of patterns for files to include in parsing. If left empty
 # all files are parsed
-arr_parseFiles=
+arr_parseFiles=()
 
-
+#Default verbosity level is 1, basic output
+verb_level=1
 
 ###############################################################################
 #                                  MAIN BODY                                  #
@@ -162,7 +237,6 @@ then
 			i=$((check_params_ret+1))	
 			shift $check_params_ret		
 		else
-			echo "end of options reached"
 			break;
 		fi
 
@@ -170,45 +244,39 @@ then
 fi
 
 # choose folder from where to fetch input data
-if [ -z "$inFolder" ]
-then
-  case "$#" in
-    2)
-      inFolder="$2"
-      ;;
-    1|0)
-      inFolder=${PWD%/${PWD##*/}}
-      ;;
-    *)
-      _usage
-      ;;
-  esac
-fi
+case "$#" in
+  2)
+    inFolder="$2"
+    ;;
+  1|0)
+    inFolder=${PWD%/${PWD##*/}}
+    ;;
+  *)
+    _usage
+    ;;
+esac
 
 # choose folder where to put output data
-if [ -z "$outFolder" ]
-then
-  case "$#" in
-    2|1)
-      outFolder="$1"
-      ;;
-    0)
-      outFolder="$BASEFOLDER/expsrc_${git_version}_`date -u +%y%m%d_%H%M%S`"
-      ;;
-    *)
-      _usage
-      ;;
-  esac
-fi
+case "$#" in
+  2|1)
+    outFolder="$1"
+    ;;
+  0)
+    outFolder="$BASEFOLDER/expsrc_${git_version}_`date -u +%y%m%d_%H%M%S`"
+    ;;
+  *)
+    _usage
+    ;;
+esac
 
-_colored_echo green "*** Exporting repository : ${inFolder##*/}"
-_colored_echo green "*** Target folder        : ${outFolder##*/}"
+_colored_echo 1 green "*** Exporting repository : ${inFolder}"
+_colored_echo 1 green "*** Target folder        : ${outFolder}"
 
 cd $inFolder
 
 # fetch latest version, on fail print warning but continue
 if [ `git fetch --tags 2>&1 | grep -c "fatal"` != "0" ]; then
-  _colored_echo yellow "Warning: git fetch failed, continuing with possibly outdated version"
+  _colored_echo 1 yellow "Warning: git fetch failed, continuing with possibly outdated version"
 fi
 
 # get version string
@@ -224,18 +292,18 @@ subModules=`git submodule | awk '{print $2}'`
 for s in $subModules; do
   if [ ! -n "$(echo ${s} | grep "expsrc")" ]; then
     echo ""
-    _colored_echo brown "submodule ${s##*/} will be processed now"
+    _colored_echo 1 brown "submodule ${s##*/} will be processed now"
     $THIS "${outFolder}/${s}" "${PWD}/${s}"
   fi
 done
 
 if [ "$#" != "2" ]; then
-  _colored_echo dgreen "root project ${inFolder##*/} will be processed now"
+  _colored_echo 1 dgreen "root project ${inFolder##*/} will be processed now"
 fi
-echo "Generating version: $git_version"
+_colored_echo 1 grey "Generating version: $git_version"
 
 # this will be the revision that is inserted in the files
-REVSTRING="Revision: ${git_version}"
+REVSTRING="${git_version}"
 
 # fetch all files that have to be parsed
 filesToParse=`git ls-files`
@@ -243,14 +311,26 @@ filesToParse=`git ls-files`
 # read these files directly out of the repository and parse them to their destination
 for i in $filesToParse; do
   if [ ! -n "$(echo ${i} | grep "expsrc")" ] && [ ! -d "${i%}" ]; then
+    
     # check if we must generate directory before
     if [ -d "${i%/*}" ] && [ ! -e "${outFolder}/${i%/*}" ]; then
       mkdir -p "${outFolder}/${i%/*}"
     fi
     
-    git show HEAD:"${i}" 2>/dev/null | \
-      sed -c -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
-        "${outFolder}/${i}"
+    # Check if the file must be parsed
+    # The function _check_parse checks the file name against the mapping
+    # of the -p or --parse attributes
+    _check_parse "${i}"
+    
+    if [ $check_parse_ret -gt 0 ]
+    then
+      git show HEAD:"${i}" 2>/dev/null | \
+        sed -c -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
+          "${outFolder}/${i}"
+    else
+      git show HEAD:"${i}" 2>/dev/null > \
+          "${outFolder}/${i}"
+    fi
   fi
 done
 
@@ -267,8 +347,8 @@ case "$#" in
     ;;
   1|0)
     echo ""
-    _colored_echo green "*** Finished Export"
-    _colored_echo green "**** output can be found in $outFolder"
+    _colored_echo 1 green "*** Finished Export"
+    _colored_echo 1 green "**** output can be found in $outFolder"
     echo ""
     ;;
   *)
