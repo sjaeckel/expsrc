@@ -337,7 +337,21 @@ for s in $subModules; do
   if [ ! -n "$(echo ${s} | grep "expsrc")" ]; then
     echo ""
     _colored_echo 1 brown "submodule ${s##*/} will be processed now"
-    $THIS "${outFolder}/${s}" "${PWD}/${s}"
+    
+    # Build a string that can be passed to the command line containing the
+    # parsing rules, if any were set
+    locParseRulesCmdLine=""
+    if [ ${#arr_parseFiles[*]} -gt 0 ]
+    then
+       # Iterate through array and check whether the file name matches
+      locParseRule=
+      for locParseRule in "${arr_parseFiles[@]}"
+      do
+         locParseRulesCmdLine="${locParseRulesCmdLine} -p $locParseRule"
+      done
+    fi
+    
+    $THIS -v "$verb_level" $locParseRulesCmdLine "${outFolder}/${s}" "${PWD}/${s}"
   fi
 done
 
