@@ -256,31 +256,57 @@ case "$#" in
     ;;
 esac
 
-# choose folder where to put output data
+# continue working now in the input folder
+cd $inFolder
+
+# check whether the input directory is dirty, if so, issue a warning that
+# the user knows, that the export will not be based on the current working
+# tree
+test -z "$(git diff-index --name-only HEAD --)" ||
+  _colored_echo 1 yellow "Warning: your working tree is dirty! Export is based on HEAD and will not include changes from current working tree!"
+
+# Update the index of the current working tree. This is important to get the
+# tags and to generate the version string correctly.
+# If it fails, a warning is issued
+if [ `git fetch --tags 2>&1 | grep -c "fatal"` != "0" ]; then
+  _colored_echo 1 yellow "Warning: git fetch failed, continuing with possibly outdated version"
+fi
+  
+# get version string
+git_version=`git describe --tags --always`
+
+# Generate the folder, where to output the content.
+# If the outFolder was not explicitely set, generate the name of the
+# output folder according to the following pattern:
+# expsrc_<Revision>_<yymmdd><HHMMSS>
+# where yy: two digit of year
+#       mm: two digit of month
+#       dd: two digit of day
+#       HH: hour of current time
+#       MM: minutes of current time
+#       SS: seconds of current time
 case "$#" in
   2|1)
     outFolder="$1"
     ;;
   0)
-    outFolder="$BASEFOLDER/expsrc_${git_version}_`date -u +%y%m%d_%H%M%S`"
+    if [ -z "$outFolder" ]
+    then
+      outFolder="$BASEFOLDER/expsrc_${git_version}_`date -u +%y%m%d_%H%M%S`"
+      _colored_echo 5 green "No output folder set, generate folder name"
+    else
+      _colored_echo 5 green "Use given output folder name"
+    fi
     ;;
   *)
     _usage
     ;;
 esac
 
+_colored_echo 1 green "Generating version: $git_version"
+
 _colored_echo 1 green "*** Exporting repository : ${inFolder}"
 _colored_echo 1 green "*** Target folder        : ${outFolder}"
-
-cd $inFolder
-
-# fetch latest version, on fail print warning but continue
-if [ `git fetch --tags 2>&1 | grep -c "fatal"` != "0" ]; then
-  _colored_echo 1 yellow "Warning: git fetch failed, continuing with possibly outdated version"
-fi
-
-# get version string
-git_version=`git describe --tags --always`
 
 # create this folder if necessary, suppress error
 mkdir -p $outFolder 2>/dev/null
@@ -296,11 +322,6 @@ for s in $subModules; do
     $THIS "${outFolder}/${s}" "${PWD}/${s}"
   fi
 done
-
-if [ "$#" != "2" ]; then
-  _colored_echo 1 dgreen "root project ${inFolder##*/} will be processed now"
-fi
-_colored_echo 1 grey "Generating version: $git_version"
 
 # this will be the revision that is inserted in the files
 REVSTRING="${git_version}"
