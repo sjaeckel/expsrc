@@ -387,7 +387,7 @@ for i in $filesToParse; do
   fi
 done
 
-cd $outFolder
+cd "$outFolder"
 
 # finally remove possible existent .gitmodules/.gitgnore files
 for g in `find . \( -name .gitmodules -or -name .gitignore \)`; do
