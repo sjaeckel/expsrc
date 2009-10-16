@@ -327,7 +327,7 @@ _colored_echo 1 green "*** Exporting repository : ${inFolder##*/} (${inFolder})"
 _colored_echo 1 green "*** Target folder        : ${outFolder##*/} (${outFolder})"
 
 # create this folder if necessary, suppress error
-mkdir -p $outFolder 2>/dev/null
+mkdir -p "$outFolder" 2>/dev/null
 
 # fetch all submodules
 subModules=`git submodule | awk '{print $2}'`
