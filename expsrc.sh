@@ -159,13 +159,14 @@ _check_params()
 #-------------------------------------------------------------------------------
 _check_parse()
 {
+  # Assume file is not to be parsed
+  check_parse_ret=0
+  
   # Check whether the arrays of patterns is set. If so, the file name
   # must be found in the array in order to be parsed.
   # If the array is empty, all files will be parsed
   if [ ${#arr_parseFiles[*]} -gt 0 ]
   then
-    check_parse_ret=0
-    
     # Iterate through array and check whether the file name matches
     local i
     for i in "${arr_parseFiles[@]}"
@@ -174,15 +175,19 @@ _check_parse()
        if [[ $1 == $i ]]
        then
          check_parse_ret=1
-         _colored_echo 5 blue "File $1 will be parsed"
-       else
-        _colored_echo 5 blue "Skip parsing of file $1"
+         _colored_echo 5 blue "OK to parse $1"
+         return
        fi
     done
   else
     # Parse pattern array is empty, therefore all files are parsed
+    _colored_echo 5 blue "No parse rules, parse $1"
     check_parse_ret=1
+    return
   fi
+  
+  # If we reached this point, parsing is skipped
+  _colored_echo 5 blue "Skip parsing for $1"
 }
 
 ###############################################################################
