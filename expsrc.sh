@@ -23,6 +23,12 @@ _usage()
   echo -e "\t\t\tA pattern of files to parse. If this option is not given,"
   echo -e "\t\t\ttags in all files are replaced. Example option would be -p *.c parses"
   echo -e "\t\t\tonly tags in *.c files. This option must be passed for every type of file"
+  echo -e
+  echo -e "\t--post-hook\tName of a post-generate update script."
+  echo -e "\t\t\tAfter generation of the output, a script in the base directory"
+  echo -e "\t\t\tis called when available. This script can be used e.g. to copy"
+  echo -e "\t\t\tnon-versioned files to the output folder."
+  echo -e "\t\t\tThis option defaults to $expsrc_hook_post"
   echo
   echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
   echo
@@ -138,6 +144,10 @@ _check_params()
     "-p")
             arr_parseFiles[${#arr_parseFiles[*]}]="$2"
             check_params_ret=2;;
+            
+    "--post-hook")
+            expsrc_hook_post="$2"
+            check_params_ret=2;;
     "-v")
             verb_level="$2"
             check_params_ret=2;;
@@ -214,6 +224,9 @@ arr_parseFiles=()
 
 #Default verbosity level is 1, basic output
 verb_level=1
+
+# Default post generate hook script
+expsrc_hook_post="expsrc_hook_post.sh"
 
 ###############################################################################
 #                                  MAIN BODY                                  #
@@ -366,6 +379,17 @@ cd $outFolder
 for g in `find . \( -name .gitmodules -or -name .gitignore \)`; do
   rm -rf $g
 done
+
+# Check if in the input folder the script '$expsrc_hook_post' exists, then
+# call this script with the argument version and output folder
+if [ -f "${inFolder}/${expsrc_hook_post}" ]
+  then
+        _colored_echo 5 green "Call post create script $expsrc_hook_post"
+      ${inFolder}/${expsrc_hook_post} "$git_version" "$inFolder" "$outFolder"
+  else
+      _colored_echo 5 green "No post create script found, skip this step"
+fi
+
 
 case "$#" in
   2)
