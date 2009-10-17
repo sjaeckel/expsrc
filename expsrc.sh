@@ -358,31 +358,43 @@ done
 # this will be the revision that is inserted in the files
 REVSTRING="${git_version}"
 
-# fetch all files that have to be parsed
-filesToParse=`git ls-files`
+# Let Git tell us the list of files in the repository. In order to be able
+# to get files with spaces, read the output from git ls-files into an array.
+# The Internal Field Separator (IFS) must be set to a newline.
+oldIFS="$IFS"
+IFS='
+'
+filesToExport=($(git ls-files))
 
-# read these files directly out of the repository and parse them to their destination
-for i in $filesToParse; do
-  if [ ! -n "$(echo ${i} | grep "expsrc")" ] && [ ! -d "${i%}" ]; then
+# Restore Internal Field Separator to its default value
+IFS="$oldIFS"
+
+# Walk through the files to export
+for (( i=0; i<${#filesToExport[@]}; i++ ));
+do
+  
+  fileToExport=${filesToExport[${i}]}
+  
+  if [ ! -n "$(echo ${fileToExport} | grep "expsrc")" ] && [ ! -d "${fileToExport%}" ]; then
     
     # check if we must generate directory before
-    if [ -d "${i%/*}" ] && [ ! -e "${outFolder}/${i%/*}" ]; then
-      mkdir -p "${outFolder}/${i%/*}"
+    if [ -d "${fileToExport%/*}" ] && [ ! -e "${outFolder}/${fileToExport%/*}" ]; then
+      mkdir -p "${outFolder}/${fileToExport%/*}"
     fi
     
     # Check if the file must be parsed
     # The function _check_parse checks the file name against the mapping
     # of the -p or --parse attributes
-    _check_parse "${i}"
+    _check_parse "${fileToExport}"
     
     if [ $check_parse_ret -gt 0 ]
     then
-      git show HEAD:"${i}" 2>/dev/null | \
+      git show HEAD:"${fileToExport}" 2>/dev/null | \
         sed -c -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
-          "${outFolder}/${i}"
+          "${outFolder}/${fileToExport}"
     else
-      git show HEAD:"${i}" 2>/dev/null > \
-          "${outFolder}/${i}"
+      git show HEAD:"${fileToExport}" 2>/dev/null > \
+          "${outFolder}/${fileToExport}"
     fi
   fi
 done
