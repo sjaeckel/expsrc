@@ -10,7 +10,7 @@ _usage()
 	echo -e
 	echo "This script exports the source of a repository with revision string in the code"
 	echo -e
-	echo -e "Usage: ${0##*/}[options] <destination> <source>"
+	echo -e "Usage: ${0##*/} [options] <destination> <source>"
   echo
 	echo -e "\t-i"
   echo -e "\t--repo\t\tBase directory of the repository to export"
@@ -33,8 +33,7 @@ _usage()
   echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
   echo
   echo -e "\t-h"
-  echo
-  echo -e "\t--help\tThis help"
+  echo -e "\t--help\t\tThis help"
   echo
   echo -e "<destination> and <source> are optional. The options -i, --repo or -o, --output are"
   echo -e "not taken in account, when the output directories are specified"
