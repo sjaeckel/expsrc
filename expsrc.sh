@@ -274,7 +274,7 @@ case "$#" in
 esac
 
 # continue working now in the input folder
-cd $inFolder
+cd "$inFolder"
 
 # check whether the input directory is dirty, if so, issue a warning that
 # the user knows, that the export will not be based on the current working
@@ -350,7 +350,7 @@ for s in $subModules; do
       done
     fi
     
-    $THIS -v "$verb_level" $locParseRulesCmdLine "${outFolder}/${s}" "${PWD}/${s}"
+    "$THIS" -v "$verb_level" $locParseRulesCmdLine "${outFolder}/${s}" "${PWD}/${s}"
   fi
 done
 
