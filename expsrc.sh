@@ -171,29 +171,18 @@ _check_parse()
   # Assume file is not to be parsed
   check_parse_ret=0
   
-  # Check whether the arrays of patterns is set. If so, the file name
-  # must be found in the array in order to be parsed.
-  # If the array is empty, all files will be parsed
-  if [ ${#arr_parseFiles[*]} -gt 0 ]
-  then
-    # Iterate through array and check whether the file name matches
-    local i
-    for i in "${arr_parseFiles[@]}"
-    do
-       :
-       if [[ $1 == $i ]]
-       then
-         check_parse_ret=1
-         _colored_echo 5 blue "OK to parse $1"
-         return
-       fi
-    done
-  else
-    # Parse pattern array is empty, therefore all files are parsed
-    _colored_echo 5 blue "No parse rules, parse $1"
-    check_parse_ret=1
-    return
-  fi
+  # Iterate through array and check whether the file name matches
+  local i
+  for i in "${arr_parseFiles[@]}"
+  do
+     :
+     if [[ $1 == $i ]]
+     then
+       check_parse_ret=1
+       _colored_echo 5 blue "OK to parse $1"
+       return
+     fi
+  done
   
   # If we reached this point, parsing is skipped
   _colored_echo 5 blue "Skip parsing for $1"
@@ -319,6 +308,18 @@ case "$#" in
     _usage
     ;;
 esac
+
+# Check which files are to be parsed and 
+if [ ${#arr_parseFiles[*]} -gt 0 ]
+then
+  _colored_echo 1 green "The following files will be parsed: "
+  for i in "${arr_parseFiles[@]}"
+  do
+    _colored_echo 1 green "   $i"
+  done
+else
+  _colored_echo 1 yellow "No files are parsied since no parsing options specified"
+fi
 
 _colored_echo 1 green "Generating version: $git_version"
 
