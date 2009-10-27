@@ -318,7 +318,7 @@ then
     _colored_echo 1 green "   $i"
   done
 else
-  _colored_echo 1 yellow "No files are parsied since no parsing options specified"
+  _colored_echo 1 yellow "No files are parsed since no parsing options specified"
 fi
 
 _colored_echo 1 green "Generating version: $git_version"
