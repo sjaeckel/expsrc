@@ -24,6 +24,13 @@ _usage()
   echo -e "\t\t\ttags in all files are replaced. Example option would be -p *.c parses"
   echo -e "\t\t\tonly tags in *.c files. This option must be passed for every type of file"
   echo -e
+  echo -e "\t--config\tUse alternative config file than $expsrc_config"
+  echo -e "\t\t\tInstead of specifying configuration options on the command line"
+  echo -e "\t\t\ta configuration file can be placed in the root directory of"
+  echo -e "\t\t\tof the given project to export the sources. The default name"
+  echo -e "\t\t\tof this file is called $expsrc_config. If an alternative file"
+  echo -e "\t\t\tis to be used, this parameter can be given with the given file name."
+  echo -e
   echo -e "\t--post-hook\tName of a post-generate update script."
   echo -e "\t\t\tAfter generation of the output, a script in the base directory"
   echo -e "\t\t\tis called when available. This script can be used e.g. to copy"
@@ -147,6 +154,9 @@ _check_params()
     "--post-hook")
             expsrc_hook_post="$2"
             check_params_ret=2;;
+    "--config")
+            expsrc_config="$2"
+            check_params_ret=2;;
     "-v")
             verb_level="$2"
             check_params_ret=2;;
@@ -216,10 +226,12 @@ verb_level=1
 # Default post generate hook script
 expsrc_hook_post="expsrc_hook_post.sh"
 
+# Default config file in root directory of project to be exported
+expsrc_config="expsrc.cfg"
+
 ###############################################################################
 #                                  MAIN BODY                                  #
 ###############################################################################
-
 
 # Parse command line arguments
 i=1
@@ -264,6 +276,33 @@ esac
 
 # continue working now in the input folder
 cd "$inFolder"
+
+# check if a config file exists which defines additional rules
+# other than the rules passed as command line arguments
+if [ -f "$expsrc_config" ]
+then
+  _colored_echo 1 yellow "Config file \"$expsrc_config\" found, start to read configuration which may override command line parameters"
+
+  oldIFS=$IFS
+  IFS='
+'
+  initial=( $( cat "$expsrc_config" ) )
+  IFS=$oldIFS
+  
+  for i in "${initial[@]}"
+  do
+    # Strip leading and trailing spaces
+    line="${i#"${i%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    
+    # Check if the line starts with a leading '#' which would be a comment
+    if [[ "$line" != \#* ]]
+    then
+      _colored_echo 5 blue "$line : configuration from config file"
+      _check_params $line
+    fi
+  done
+fi
 
 # check whether the input directory is dirty, if so, issue a warning that
 # the user knows, that the export will not be based on the current working
@@ -405,6 +444,12 @@ cd "$outFolder"
 for g in `find . \( -name .gitmodules -or -name .gitignore \)`; do
   rm -rf $g
 done
+
+# Remove the configuration file in case it was exported. Care must be taken
+# when the configuration file is passed as absolute path, in this case, the
+# file must not be deleted!
+expsrc_cfg_to_delete="${expsrc_config##*[/|\\]}"
+rm -f "$outFolder/$expsrc_cfg_to_delete"
 
 # Check if in the input folder the script '$expsrc_hook_post' exists, then
 # call this script with the argument version and output folder
