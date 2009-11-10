@@ -136,7 +136,7 @@ _check_params()
     "-i")
             inFolder="$2"
             check_params_ret=2;;
-    "-repo")
+    "--repo")
             inFolder="$2"
             check_params_ret=2;;
     "-o")
@@ -210,8 +210,10 @@ THIS=${PWD}/${0##*/}
 
 # input directory
 # This is the directory of the project which is to be exported.
-# If not given, the directory
-inFolder=
+# By default it is assumed, that the expsrc is a subproject of the project 
+# to be exported. Therefore the input folder is the parent directory
+# of the expsrc.sh script
+inFolder="../"
 
 # output directory
 outFolder=
@@ -261,21 +263,16 @@ then
 	done
 fi
 
-# choose folder from where to fetch input data
+# If 2 arguments were passed, the second argument is the input folder
 case "$#" in
   2)
     inFolder="$2"
-    ;;
-  1|0)
-    inFolder=${PWD%/${PWD##*/}}
-    ;;
-  *)
-    _usage
     ;;
 esac
 
 # continue working now in the input folder
 cd "$inFolder"
+_colored_echo 1 yellow "Start exporting project in \"$inFolder\""
 
 # check if a config file exists which defines additional rules
 # other than the rules passed as command line arguments
