@@ -213,7 +213,7 @@ THIS=${PWD}/${0##*/}
 # By default it is assumed, that the expsrc is a subproject of the project 
 # to be exported. Therefore the input folder is the parent directory
 # of the expsrc.sh script
-inFolder="../"
+inFolder="$PWD/../"
 
 # output directory
 outFolder=
