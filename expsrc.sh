@@ -453,7 +453,7 @@ rm -f "$outFolder/$expsrc_cfg_to_delete"
 if [ -f "${inFolder}/${expsrc_hook_post}" ]
   then
         _colored_echo 5 green "Call post create script $expsrc_hook_post"
-      ${inFolder}/${expsrc_hook_post} "$git_version" "$inFolder" "$outFolder"
+      "${inFolder}"/${expsrc_hook_post} "$git_version" "$inFolder" "$outFolder"
   else
       _colored_echo 5 green "No post create script found, skip this step"
 fi
