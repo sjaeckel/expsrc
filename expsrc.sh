@@ -143,7 +143,7 @@ _check_params()
             outFolder="$2"
             check_params_ret=2;;
 
-    "-output")
+    "--output")
             outFolder="$2"
             check_params_ret=2;;
             
