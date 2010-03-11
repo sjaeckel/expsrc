@@ -426,7 +426,7 @@ do
     if [ $check_parse_ret -gt 0 ]
     then
       git show HEAD:"${fileToExport}" 2>/dev/null | \
-        sed -c -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
+        sed -b -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
           "${outFolder}/${fileToExport}"
     else
       git show HEAD:"${fileToExport}" 2>/dev/null > \
