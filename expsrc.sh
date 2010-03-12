@@ -39,6 +39,8 @@ _usage()
   echo
   echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
   echo
+  echo -e "\t-e\t\tOpen explorer window after export"
+  echo
   echo -e "\t-h"
   echo -e "\t--help\t\tThis help"
   echo
@@ -160,6 +162,9 @@ _check_params()
         "-v")
                 verb_level="$2"
                 check_params_ret=2;;
+        "-e")
+                open_explorer=1
+                check_params_ret=1;;
         *)
                 _colored_echo 1 red Unknown option $1
                 _usage
@@ -223,6 +228,9 @@ arr_parseFiles=()
 
 #Default verbosity level is 1, basic output
 verb_level=1
+
+#Default explorer behavior is disabled
+open_explorer=0
 
 # Default post generate hook script
 expsrc_hook_post="expsrc_hook_post.sh"
@@ -467,6 +475,14 @@ case "$#" in
     _colored_echo 1 green "*** Finished Export"
     _colored_echo 1 green "**** output can be found in $outFolder"
     echo ""
+    #Check if the explorer should be opened automatically
+    if [ $open_explorer -eq 1 ]
+    then
+        outFolder=`cmd //c echo "$outFolder"`
+        outFolder=$(echo "$outFolder" | sed -e 's@/@\\@Ig')
+        explorer.exe "$outFolder"
+    fi
+    
     ;;
   *)
     _usage
