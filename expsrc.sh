@@ -444,8 +444,8 @@ done
 
 cd "$outFolder"
 
-# finally remove possible existent .gitmodules/.gitgnore files
-for g in `find . \( -name .gitmodules -or -name .gitignore \)`; do
+# finally remove possible existent .gitmodules/.gitgnore/.gitattributes files
+for g in `find . \( -name .gitmodules -or -name .gitignore -or -name .gitattributes \)`; do
   rm -rf $g
 done
 
