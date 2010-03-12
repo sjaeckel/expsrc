@@ -4,21 +4,21 @@
 
 _usage() 
 {
-	echo -e
-	echo -e "${0##*/} version `git describe --tags --always`"
-	echo -e "Copyright Steinbeis Transfer Center Embedded Design and Networking, 2009"
-	echo -e
-	echo "This script exports the source of a repository with revision string in the code"
-	echo -e
-	echo -e "Usage: ${0##*/} [options] <destination> <source>"
+  echo -e
+  echo -e "${0##*/} version `git describe --tags --always`"
+  echo -e "Copyright Steinbeis Transfer Center Embedded Design and Networking, 2009"
+  echo -e
+  echo "This script exports the source of a repository with revision string in the code"
+  echo -e
+  echo -e "Usage: ${0##*/} [options] <destination> <source>"
   echo
-	echo -e "\t-i"
+  echo -e "\t-i"
   echo -e "\t--repo\t\tBase directory of the repository to export"
   echo
-	echo -e "\t-o"
+  echo -e "\t-o"
   echo -e "\t--output\tDirectory where to output the files"
   echo
-	echo -e "\t-p"
+  echo -e "\t-p"
   echo -e "\t--parse\t\tFile to parse for the revision tag."
   echo -e "\t\t\tA pattern of files to parse. If this option is not given,"
   echo -e "\t\t\ttags in all files are replaced. Example option would be -p *.c parses"
@@ -45,7 +45,7 @@ _usage()
   echo -e "<destination> and <source> are optional. The options -i, --repo or -o, --output are"
   echo -e "not taken in account, when the output directories are specified"
   
-	exit -1
+  exit -1
 }
 
 #-------------------------------------------------------------------------------
@@ -124,48 +124,47 @@ _colored_echo()
 #-------------------------------------------------------------------------------
 _check_params()
 {
-	option=$1	
-	
-	case $option in
-		"-h")
-						_usage
-						exit 0;;
-		"--help")
-						_usage
-						exit 0;;
-    "-i")
-            inFolder="$2"
-            check_params_ret=2;;
-    "--repo")
-            inFolder="$2"
-            check_params_ret=2;;
-    "-o")
-            outFolder="$2"
-            check_params_ret=2;;
+    option=$1
+    
+    case $option in
+        "-h")
+                _usage
+                exit 0;;
+        "--help")
+                _usage
+                exit 0;;
+        "-i")
+                inFolder="$2"
+                check_params_ret=2;;
+        "--repo")
+                inFolder="$2"
+                check_params_ret=2;;
+        "-o")
+                outFolder="$2"
+                check_params_ret=2;;
 
-    "--output")
-            outFolder="$2"
-            check_params_ret=2;;
-            
-    "-p")
-            arr_parseFiles[${#arr_parseFiles[*]}]="$2"
-            check_params_ret=2;;
-            
-    "--post-hook")
-            expsrc_hook_post="$2"
-            check_params_ret=2;;
-    "--config")
-            expsrc_config="$2"
-            check_params_ret=2;;
-    "-v")
-            verb_level="$2"
-            check_params_ret=2;;
-            
-		*)				
-						_colored_echo 1 red Unknown option $1
-						_usage
-						exit -1;;
-	esac
+        "--output")
+                outFolder="$2"
+                check_params_ret=2;;
+                
+        "-p")
+                arr_parseFiles[${#arr_parseFiles[*]}]="$2"
+                check_params_ret=2;;
+                
+        "--post-hook")
+                expsrc_hook_post="$2"
+                check_params_ret=2;;
+        "--config")
+                expsrc_config="$2"
+                check_params_ret=2;;
+        "-v")
+                verb_level="$2"
+                check_params_ret=2;;
+        *)
+                _colored_echo 1 red Unknown option $1
+                _usage
+                exit -1;;
+    esac
 
 }
 
@@ -241,26 +240,26 @@ passes=$#
 
 if [ $passes -gt 0 ]
 then
-	while [ $i -le $passes ]
-	 do
-		option="$1"
-		param="$2"
+    while [ $i -le $passes ]
+     do
+        option="$1"
+        param="$2"
 
     # Check if the option starts with a leading '-' then it is an 
-		# option, otherwise we reached the end of the options and can
-		# continue with the script
-		
-		if [[ $option == -* ]]
-		then	
-			_check_params "$option" "$param"
-					
-			i=$((check_params_ret+1))	
-			shift $check_params_ret		
-		else
-			break;
-		fi
+        # option, otherwise we reached the end of the options and can
+        # continue with the script
+        
+        if [[ $option == -* ]]
+        then
+            _check_params "$option" "$param"
 
-	done
+            i=$((check_params_ret+1))
+            shift $check_params_ret
+        else
+            break;
+        fi
+
+    done
 fi
 
 # If 2 arguments were passed, the second argument is the input folder
