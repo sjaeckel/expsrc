@@ -128,6 +128,8 @@ _check_params()
 {
     option=$1
     
+    _colored_echo 5 blue called _check_params: option is $1 and value is $2
+    
     case $option in
         "-h")
                 _usage
@@ -412,6 +414,22 @@ filesToExport=($(git ls-files))
 # Restore Internal Field Separator to its default value
 IFS="$oldIFS"
 
+# Choose the correct format of the command for sed
+SEDVERSION=`sed --version | grep "version" | tr "GNU sed version" ' ' | tr '.' ' '`
+SEDVERSION=($SEDVERSION)
+
+if [ ${SEDVERSION[0]}="4" ];
+then
+    SEDPARAM="-b"
+elif [ ${SEDVERSION[0]}="3" ];
+then
+    SEDPARAM="-c"
+else
+    SEDVERSION=`sed --version | grep "version"`
+    _colored_echo 0 red "Unknown version of sed $SEDVERSION"
+    exit -1
+fi
+
 # Walk through the files to export
 for (( i=0; i<${#filesToExport[@]}; i++ ));
 do
@@ -433,7 +451,7 @@ do
     if [ $check_parse_ret -gt 0 ]
     then
       git show HEAD:"${fileToExport}" 2>/dev/null | \
-        sed -b -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
+        sed $SEDPARAM -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
           "${outFolder}/${fileToExport}"
     else
       git show HEAD:"${fileToExport}" 2>/dev/null > \
