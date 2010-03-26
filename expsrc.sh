@@ -208,6 +208,9 @@ _check_parse()
 #                               GLOBAL VARIABLES                              #
 ###############################################################################
 
+# disable wildcard epansion
+set -f
+
 # base directory
 BASEFOLDER=$PWD
 
@@ -298,14 +301,14 @@ then
   for i in "${initial[@]}"
   do
     # Strip leading and trailing spaces
-    line="${i#"${i%%[![:space:]]*}"}"
-    line="${line%"${line##*[![:space:]]}"}"
+    cfgLine="${i#"${i%%[![:space:]]*}"}"
+    cfgLine="${cfgLine%"${cfgLine##*[![:space:]]}"}"
     
     # Check if the line starts with a leading '#' which would be a comment
-    if [[ "$line" != \#* ]]
+    if [[ "${cfgLine}" != \#* ]]
     then
-      _colored_echo 5 blue "$line : configuration from config file"
-      _check_params $line
+      _colored_echo 5 blue "${cfgLine} : configuration from config file"
+      _check_params ${cfgLine}
     fi
   done
 fi
