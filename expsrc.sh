@@ -128,8 +128,6 @@ _check_params()
 {
     option=$1
     
-    _colored_echo 5 blue called _check_params: option is $1 and value is $2
-    
     case $option in
         "-h")
                 _usage
