@@ -41,6 +41,12 @@ _usage()
   echo
   echo -e "\t-e\t\tOpen explorer window after export"
   echo
+  echo -e "\t--svntags\tEXPERIMENTAL: Parses more SVN tags of files"
+  echo -e "\t\t\tChecks if the \$Revision\$ tag is preceeded by a \"\\\version\""
+  echo -e "\t\t\ttag or not and writes either \"\\\version TAGNAME\" or \$Revision: TAGNAME\$"
+  echo -e "\t\t\tin the file."
+  echo -e "\t\t\tInserts the author time of the commit in the \$Date\$ tag."
+  echo
   echo -e "\t-h"
   echo -e "\t--help\t\tThis help"
   echo
@@ -165,6 +171,9 @@ _check_params()
         "-e")
                 open_explorer=1
                 check_params_ret=1;;
+        "--svntags")
+                svntags_parse=1
+                check_params_ret=1;;
         *)
                 _colored_echo 1 red Unknown option $1
                 _usage
@@ -234,6 +243,9 @@ verb_level=1
 
 #Default explorer behavior is disabled
 open_explorer=0
+
+#Default behavior of svntags parsing is disabled
+svntags_parse=0
 
 # Default post generate hook script
 expsrc_hook_post="expsrc_hook_post.sh"
@@ -396,6 +408,11 @@ for s in $subModules; do
          locParseRulesCmdLine="${locParseRulesCmdLine} -p $locParseRule"
       done
     fi
+    # If svntags parsing has been enabled, do it in submodules as well
+    if [ $svntags_parse -gt 0 ]
+    then
+        locParseRulesCmdLine="${locParseRulesCmdLine} --svntags"
+    fi
     
     "$THIS" -v "$verb_level" $locParseRulesCmdLine "${outFolder}/${s}" "${PWD}/${s}"
   fi
@@ -451,9 +468,28 @@ do
     
     if [ $check_parse_ret -gt 0 ]
     then
-      git show HEAD:"${fileToExport}" 2>/dev/null | \
-        sed $SEDPARAM -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
-          "${outFolder}/${fileToExport}"
+        if [ $svntags_parse -gt 0 ]
+        then
+          REVSTRING=`git log -1 --format="%H" -- ${fileToExport}`
+          REVSTRING=`git describe --always --contains $REVSTRING | tr '~' ' ' | tr '^' ' '`
+          REVSTRING=($REVSTRING)
+          REVSTRING=${REVSTRING[0]}
+          REVDATE=`git log -1 --format="%ai" -- ${fileToExport}`
+          # Read the file out of the repository and parse the CVS/SVN tags
+          # 1. check if there's a '\version $Revision$' tag and replace it with '\version MY_TAG'
+          # 2. check if there's a '$Revision$' tag left and replace this one with '$Revision: MY_TAG $'
+          # 3. check if there's a '$Date$' tag and replace it with '$Date: COMMIT_DATE $'
+          git show HEAD:"${fileToExport}" 2>/dev/null | \
+            sed $SEDPARAM -e 's@\\version.[[:space:]]*\$Revision.*\$@\\version  '"$REVSTRING"'@Ig' \
+                             -e 's/\$Revision.*\$/'"\$Revision: $REVSTRING \$"'/Ig' \
+                                -e 's/\$Date.*\$/'"\$Date: $REVDATE \$"'/Ig' \
+                                    > "${outFolder}/${fileToExport}"
+        else
+          # Read the file out of the repository and replace the $Revision$ tag with 'MY_TAG'
+          git show HEAD:"${fileToExport}" 2>/dev/null | \
+            sed $SEDPARAM -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
+              "${outFolder}/${fileToExport}"
+        fi
     else
       git show HEAD:"${fileToExport}" 2>/dev/null > \
           "${outFolder}/${fileToExport}"
