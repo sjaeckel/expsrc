@@ -37,7 +37,7 @@ _usage()
   echo -e "\t\t\tnon-versioned files to the output folder."
   echo -e "\t\t\tThis option defaults to $expsrc_hook_post"
   echo
-  echo -e "\t-tRev\t\tAlternative tag to replace with the revision string."
+  echo -e "\t--tRev\t\tAlternative tag to replace with the revision string."
   echo -e "\t\t\tBy default, expsrc.sh parses the file for the tag \$Revision.*\$."
   echo -e "\t\t\tWith this option, the name in the tag can be overridden, such"
   echo -e "\t\t\tas -tRev \"some_other_tag_name\". The dollar signs, however"
@@ -164,7 +164,7 @@ _check_params()
         "-p")
                 arr_parseFiles[${#arr_parseFiles[*]}]="$2"
                 check_params_ret=2;;
-        "-tRev")
+        "--tRev")
                 tagRevision="$2"
                 check_params_ret=2;;
                 
