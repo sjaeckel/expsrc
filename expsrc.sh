@@ -37,6 +37,12 @@ _usage()
   echo -e "\t\t\tnon-versioned files to the output folder."
   echo -e "\t\t\tThis option defaults to $expsrc_hook_post"
   echo
+  echo -e "\t-tRev\t\tAlternative tag to replace with the revision string."
+  echo -e "\t\t\tBy default, expsrc.sh parses the file for the tag \$Revision.*\$."
+  echo -e "\t\t\tWith this option, the name in the tag can be overridden, such"
+  echo -e "\t\t\tas -tRev \"some_other_tag_name\". The dollar signs, however"
+  echo -e "\t\t\tremain as delimiter for the tag."
+  echo
   echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
   echo
   echo -e "\t-e\t\tOpen explorer window after export"
@@ -158,6 +164,9 @@ _check_params()
         "-p")
                 arr_parseFiles[${#arr_parseFiles[*]}]="$2"
                 check_params_ret=2;;
+        "-tRev")
+                tagRevision="$2"
+                check_params_ret=2;;
                 
         "--post-hook")
                 expsrc_hook_post="$2"
@@ -252,6 +261,9 @@ expsrc_hook_post="expsrc_hook_post.sh"
 
 # Default config file in root directory of project to be exported
 expsrc_config="expsrc.cfg"
+
+# Default tag of the version to replace.
+tagRevision="Revision"
 
 ###############################################################################
 #                                  MAIN BODY                                  #
@@ -485,9 +497,10 @@ do
                                 -e 's/\$Date.*\$/'"\$Date: $REVDATE \$"'/Ig' \
                                     > "${outFolder}/${fileToExport}"
         else
+          SEDSTRING='s/\$'"$tagRevision"'.*\$/'"$REVSTRING"'/Ig'
           # Read the file out of the repository and replace the $Revision$ tag with 'MY_TAG'
           git show HEAD:"${fileToExport}" 2>/dev/null | \
-            sed $SEDPARAM -e 's/\$Revision.*\$/'"$REVSTRING"'/Ig' > \
+            sed $SEDPARAM -e $SEDSTRING > \
               "${outFolder}/${fileToExport}"
         fi
     else
