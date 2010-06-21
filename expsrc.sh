@@ -43,15 +43,15 @@ _usage()
   echo -e "\t\t\tas -tRev \"some_other_tag_name\". The dollar signs, however"
   echo -e "\t\t\tremain as delimiter for the tag."
   echo
-  echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
-  echo
-  echo -e "\t-e\t\tOpen explorer window after export"
-  echo
-  echo -e "\t--svntags\tEXPERIMENTAL: Parses more SVN tags of files"
+  echo -e "\t--svntags\tEXPERIMENTAL: Parses more SVN tags of files - will ignore \"--tRev\" options"
   echo -e "\t\t\tChecks if the \$Revision\$ tag is preceeded by a \"\\\version\""
   echo -e "\t\t\ttag or not and writes either \"\\\version TAGNAME\" or \$Revision: TAGNAME\$"
   echo -e "\t\t\tin the file."
   echo -e "\t\t\tInserts the author time of the commit in the \$Date\$ tag."
+  echo
+  echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
+  echo
+  echo -e "\t-e\t\tOpen explorer window after export"
   echo
   echo -e "\t-h"
   echo -e "\t--help\t\tThis help"
