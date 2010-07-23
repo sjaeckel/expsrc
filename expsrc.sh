@@ -6,10 +6,10 @@ _usage()
 {
   echo -e
   echo -e "${0##*/} version `git describe --tags --always`"
-  echo -e "Copyright Steinbeis Transfer Center Embedded Design and Networking, 2009"
-  echo -e
-  echo "This script exports the source of a repository with revision string in the code"
-  echo -e
+  echo -e "Copyright Steinbeis Transfer Center Embedded Design and Networking, 2010"
+  echo
+  echo -e "This script exports the source of a repository with revision string in the code"
+  echo
   echo -e "Usage: ${0##*/} [options] <destination> <source>"
   echo
   echo -e "\t-i"
@@ -23,14 +23,14 @@ _usage()
   echo -e "\t\t\tA pattern of files to parse. If this option is not given,"
   echo -e "\t\t\ttags in all files are replaced. Example option would be -p *.c parses"
   echo -e "\t\t\tonly tags in *.c files. This option must be passed for every type of file"
-  echo -e
+  echo
   echo -e "\t--config\tUse alternative config file than $expsrc_config"
   echo -e "\t\t\tInstead of specifying configuration options on the command line"
   echo -e "\t\t\ta configuration file can be placed in the root directory of"
   echo -e "\t\t\tof the given project to export the sources. The default name"
   echo -e "\t\t\tof this file is called $expsrc_config. If an alternative file"
   echo -e "\t\t\tis to be used, this parameter can be given with the given file name."
-  echo -e
+  echo
   echo -e "\t--override-cfg\tDo not use a config file"
   echo -e "\t\t\tThis will force me not to use a config file, even if given as parameter"
   echo
@@ -168,6 +168,9 @@ _check_params()
                 arr_parseFiles[${#arr_parseFiles[*]}]="$2"
                 check_params_ret=2;;
         "--tRev")
+                if [ "$2" == "Revision" ] || [ "$2" == "Author" ] || [ "$2" == "Id" ] || [ "$2" == "Date" ] || [ "$2" == "HeadURL" ]; then
+                  _colored_echo 1 yellow Warning: I hope you are sure that you want to replace a standard SVN Keyword
+                fi
                 tagRevision="$2"
                 check_params_ret=2;;
                 
@@ -272,7 +275,7 @@ expsrc_config="expsrc.cfg"
 ignore_cfg=0
 
 # Default tag of the version to replace.
-tagRevision="Revision"
+tagRevision="Version"
 
 ###############################################################################
 #                                  MAIN BODY                                  #
@@ -496,15 +499,18 @@ do
           REVSTRING=($REVSTRING)
           REVSTRING=${REVSTRING[0]}
           REVDATE=`git log -1 --format="%ai" -- ${fileToExport}`
+          REVAUTHOR=`git log -1 --format="%an" -- ${fileToExport}`
           # Read the file out of the repository and parse the CVS/SVN tags
-          # 1. check if there's a '\version $Revision$' tag and replace it with '\version MY_TAG'
+          # 1. check if there's a '$tRevParameter$' tag and replace it with 'MY_TAG'
           # 2. check if there's a '$Revision$' tag left and replace this one with '$Revision: MY_TAG $'
           # 3. check if there's a '$Date$' tag and replace it with '$Date: COMMIT_DATE $'
+          # 4. check if there's a '$Id$ tag and replace it with '$Id: fileToExport MY_TAG COMMIT_DATE COMMITTER $'
           git show HEAD:"${fileToExport}" 2>/dev/null | \
-            sed $SEDPARAM -e 's@\\version.[[:space:]]*\$Revision.*\$@\\version  '"$REVSTRING"'@Ig' \
-                             -e 's/\$Revision.*\$/'"\$Revision: $REVSTRING \$"'/Ig' \
-                                -e 's/\$Date.*\$/'"\$Date: $REVDATE \$"'/Ig' \
-                                    > "${outFolder}/${fileToExport}"
+            sed $SEDPARAM -e 's@\$'"$tagRevision"'.*\$@'"$REVSTRING"'@Ig' \
+                             -e 's@\$Revision.*\$@\$Revision: '"$REVSTRING"' \$@Ig' \
+                                -e 's@\$Date.*\$@'"\$Date: $REVDATE \$"'@Ig' \
+                                    -e 's@\$Id.*\$@'"\$Id: $fileToExport $REVSTRING $REVDATE $REVAUTHOR \$"'@Ig' \
+                                        > "${outFolder}/${fileToExport}"
         else
           SEDSTRING='s/\$'"$tagRevision"'.*\$/'"$REVSTRING"'/Ig'
           # Read the file out of the repository and replace the $Revision$ tag with 'MY_TAG'
