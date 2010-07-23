@@ -31,6 +31,9 @@ _usage()
   echo -e "\t\t\tof this file is called $expsrc_config. If an alternative file"
   echo -e "\t\t\tis to be used, this parameter can be given with the given file name."
   echo -e
+  echo -e "\t--override-cfg\tDo not use a config file"
+  echo -e "\t\t\tThis will force me not to use a config file, even if given as parameter"
+  echo
   echo -e "\t--post-hook\tName of a post-generate update script."
   echo -e "\t\t\tAfter generation of the output, a script in the base directory"
   echo -e "\t\t\tis called when available. This script can be used e.g. to copy"
@@ -174,6 +177,9 @@ _check_params()
         "--config")
                 expsrc_config="$2"
                 check_params_ret=2;;
+        "--override-cfg")
+                ignore_cfg=1
+                check_params_ret=1;;
         "-v")
                 verb_level="$2"
                 check_params_ret=2;;
@@ -262,6 +268,9 @@ expsrc_hook_post="expsrc_hook_post.sh"
 # Default config file in root directory of project to be exported
 expsrc_config="expsrc.cfg"
 
+# Default behavior is to use a config file if found
+ignore_cfg=0
+
 # Default tag of the version to replace.
 tagRevision="Revision"
 
@@ -310,7 +319,7 @@ _colored_echo 1 yellow "Start exporting project in \"$inFolder\""
 
 # check if a config file exists which defines additional rules
 # other than the rules passed as command line arguments
-if [ -f "$expsrc_config" ]
+if [ -f "$expsrc_config" ] && [ $ignore_cfg == 0 ]
 then
   _colored_echo 1 yellow "Config file \"$expsrc_config\" found, start to read configuration which may override command line parameters"
 
