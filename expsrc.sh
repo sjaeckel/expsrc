@@ -309,13 +309,6 @@ then
     done
 fi
 
-# If 2 arguments were passed, the second argument is the input folder
-case "$#" in
-  2)
-    inFolder="$2"
-    ;;
-esac
-
 # continue working now in the input folder
 cd "$inFolder"
 _colored_echo 1 yellow "Start exporting project in \"$inFolder\""
