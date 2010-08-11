@@ -41,16 +41,20 @@ _usage()
   echo -e "\t\t\tThis option defaults to $expsrc_hook_post"
   echo
   echo -e "\t--tRev\t\tAlternative tag to replace with the revision string."
-  echo -e "\t\t\tBy default, expsrc.sh parses the file for the tag \$Revision.*\$."
+  echo -e "\t\t\tBy default, expsrc.sh parses the file for the tag \$Version.*\$."
   echo -e "\t\t\tWith this option, the name in the tag can be overridden, such"
   echo -e "\t\t\tas -tRev \"some_other_tag_name\". The dollar signs, however"
   echo -e "\t\t\tremain as delimiter for the tag."
   echo
-  echo -e "\t--svntags\tEXPERIMENTAL: Parses more SVN tags of files - will ignore \"--tRev\" options"
-  echo -e "\t\t\tChecks if the \$Revision\$ tag is preceeded by a \"\\\version\""
-  echo -e "\t\t\ttag or not and writes either \"\\\version TAGNAME\" or \$Revision: TAGNAME\$"
-  echo -e "\t\t\tin the file."
-  echo -e "\t\t\tInserts the author time of the commit in the \$Date\$ tag."
+  echo -e "\t--svntags\tParse more SVN tags of files"
+  echo -e "\t\t\tParses the standard SVN Keywords: \$Revision\$, \$Author\$, \$Date\$ and \$Id\$"
+  echo -e "\t\t\tand inserts the fitting value as done by SVN."
+  echo -e "\t\t\t\te.g.: \$Revision\$ will become \$Revision: MY_TAG \$"
+  echo -e "\t\t\tThe parameter that is given to the option \"--tRev\""
+  echo -e "\t\t\twill simply be substituted by the tag!"
+  echo -e "\t\t\t\te.g.: \$Version\$ will become MY_TAG"
+  echo -e "\t\t\tThe parameter that is given to the option \"--tRev\" is considered first,"
+  echo -e "\t\t\tso substitution of SVN Keywords by usage of \"--tRev\" is not recommended."
   echo
   echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
   echo
@@ -463,6 +467,22 @@ else
     exit -1
 fi
 
+# search for the semver tag in all tags
+ALLTAGS=(`git tag`)
+SEMVERALTERNATIVE=""
+for (( i=0; i<${#ALLTAGS[@]}; i++ ));
+do
+    # if it's in the list, choose the next tag to be the alternative
+    if [ ${ALLTAGS[${i}]} == "semver" ]; then
+        if [ "${#ALLTAGS[@]}" -lt "$((i+1))" ]; then
+            _colored_echo 0 red "semver tag occurs, but not any further tag! Exit since this can't be handled"
+            exit -1
+        fi
+        SEMVERALTERNATIVE=${ALLTAGS[${i}+1]}
+        break
+    fi
+done
+
 # Walk through the files to export
 for (( i=0; i<${#filesToExport[@]}; i++ ));
 do
@@ -485,14 +505,35 @@ do
     then
         if [ $svntags_parse -gt 0 ]
         then
+          # get the SHA1 commit ID of the last modification of this file
           REVSTRING=`git log -1 --format="%H" -- ${fileToExport}`
-          REVSTRING=`git describe --always --contains $REVSTRING | tr '~' ' ' | tr '^' ' '`
-          REVSTRING=($REVSTRING)
+          # get the first tag that includes this commit
+          REVSTRING=(`git describe --always --contains $REVSTRING | tr '~' ' ' | tr '^' ' ' | tr '_' ' '`)
           REVSTRING=${REVSTRING[0]}
+          # Check if the semver tag already contains the tag of this file
+          SEMVERCHECK=(`git describe --always --contains --match "semver" ${REVSTRING} | tr '~' ' ' | tr '^' ' '`)
+          if [ ${SEMVERCHECK[0]} == "semver" ]; then
+            # The semver tag already contains this files' tag
+            #  so check if the tag of this file is the semver tag itself
+            #  and if this is the case, replace it with the alternative tag that has been chosen before
+            if [ $REVSTRING == "semver" ]; then
+                REVSTRING=(`echo ${SEMVERALTERNATIVE} | tr '[:alpha:]' ' '`)
+                REVSTRING=${REVSTRING[0]}
+            fi
+            _colored_echo 4 blue "NOT YET \"semver\" tagged: ${fileToExport} version: ${REVSTRING}"
+          else
+            # This files' tag is not yet included in the semver tag
+            #  so this files' tag is alread semver tagged
+            REVSTRING=(`echo ${REVSTRING} | tr '[:alpha:]' ' '`)
+            REVSTRING=${REVSTRING[0]}
+            _colored_echo 4 blue "already \"semver\" tagged: ${fileToExport} version: ${REVSTRING}"
+          fi
+          # get the date of the last modification of this file
           REVDATE=`git log -1 --format="%ai" -- ${fileToExport}`
+          # get the author of the last modification of this file
           REVAUTHOR=`git log -1 --format="%an" -- ${fileToExport}`
           # Read the file out of the repository and parse the CVS/SVN tags
-          # 1. check if there's a '$tRevParameter$' tag and replace it with 'MY_TAG'
+          # 1. check if there's a '$"--tRev Parameter"$' tag and replace it with 'MY_TAG'
           # 2. check if there's a '$Revision$' tag left and replace this one with '$Revision: MY_TAG $'
           # 3. check if there's a '$Date$' tag and replace it with '$Date: COMMIT_DATE $'
           # 4. check if there's a '$Id$ tag and replace it with '$Id: fileToExport MY_TAG COMMIT_DATE COMMITTER $'
