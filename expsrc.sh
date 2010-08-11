@@ -150,19 +150,20 @@ _check_params()
         "--help")
                 _usage
                 exit 0;;
-        "-i")
-                inFolder="$2"
-                check_params_ret=2;;
-        "--repo")
-                inFolder="$2"
-                check_params_ret=2;;
-        "-o")
-                outFolder="$2"
-                check_params_ret=2;;
-
-        "--output")
-                outFolder="$2"
-                check_params_ret=2;;
+                
+        "--repo" | "-i")
+                # convert the path to an absolute path and save it
+                inFolder=$(cd "$2"; /bin/pwd)
+                check_params_ret=2
+                ;;
+                
+        "--output" | "-o")
+                # check if the output folder exists already, if not create it
+                [ -d "$2" ] || `/bin/mkdir -p "$2"`
+                # convert the path to an absolute path and save it
+                outFolder=$(cd "$2"; /bin/pwd)
+                check_params_ret=2
+                ;;
                 
         "-p")
                 arr_parseFiles[${#arr_parseFiles[*]}]="$2"
@@ -240,7 +241,7 @@ set -f
 BASEFOLDER=$PWD
 
 # rememeber my full name to call me later
-THIS=${PWD}/${0##*/}
+THIS=${0##*/}
 
 # input directory
 # This is the directory of the project which is to be exported.
@@ -367,9 +368,6 @@ git_version=`git describe --tags --always`
 #       MM: minutes of current time
 #       SS: seconds of current time
 case "$#" in
-  2|1)
-    outFolder="$1"
-    ;;
   0)
     if [ -z "$outFolder" ]
     then
@@ -431,7 +429,7 @@ for s in $subModules; do
         locParseRulesCmdLine="${locParseRulesCmdLine} --svntags"
     fi
     
-    "$THIS" -v "$verb_level" $locParseRulesCmdLine "${outFolder}/${s}" "${PWD}/${s}"
+    "$THIS" -v "$verb_level" $locParseRulesCmdLine "--tRev" "${tagRevision}" "-o" "${outFolder}/${s}" "-i" "${PWD}/${s}"
   fi
 done
 
