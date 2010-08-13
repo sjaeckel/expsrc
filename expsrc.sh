@@ -56,6 +56,11 @@ _usage()
   echo -e "\t\t\tThe parameter that is given to the option \"--tRev\" is considered first,"
   echo -e "\t\t\tso substitution of SVN Keywords by usage of \"--tRev\" is not recommended."
   echo
+  echo -e "\t--original-tags\tLet the tag-name untouched"
+  echo -e "\t\t\tStandard behavior is to strip all additional characters from the tag,"
+  echo -e "\t\t\tthis option disables this behavior. Nonetheless, tags that are already"
+  echo -e "\t\t\tin semver style will have removed the leading 'v'!"
+  echo
   echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
   echo
   echo -e "\t-e\t\tOpen explorer window after export"
@@ -197,6 +202,9 @@ _check_params()
         "--svntags")
                 svntags_parse=1
                 check_params_ret=1;;
+        "--original-tags")
+                clean_tags=0
+                check_params_ret=1;;
         *)
                 _colored_echo 1 red Unknown option $1
                 _usage
@@ -281,6 +289,9 @@ ignore_cfg=0
 
 # Default tag of the version to replace.
 tagRevision="Version"
+
+# Default behavior of cleaning tags is on
+clean_tags=1
 
 ###############################################################################
 #                                  MAIN BODY                                  #
@@ -479,6 +490,11 @@ do
             exit -1
         fi
         SEMVERALTERNATIVE=${ALLTAGS[${i}+1]}
+        case ${REVSTRING} in
+            v*)
+                SEMVERALTERNATIVE=${SEMVERALTERNATIVE:1}
+                ;;
+        esac
         break
     fi
 done
@@ -508,25 +524,33 @@ do
           # get the SHA1 commit ID of the last modification of this file
           REVSTRING=`git log -1 --format="%H" -- ${fileToExport}`
           # get the first tag that includes this commit
-          REVSTRING=(`git describe --always --contains $REVSTRING | tr '~' ' ' | tr '^' ' ' | tr '_' ' '`)
+          REVSTRING=(`git describe --always --contains $REVSTRING | tr '~^_' ' '`)
           REVSTRING=${REVSTRING[0]}
           # Check if the semver tag already contains the tag of this file
-          SEMVERCHECK=(`git describe --always --contains --match "semver" ${REVSTRING} | tr '~' ' ' | tr '^' ' '`)
+          SEMVERCHECK=(`git describe --always --contains --match "semver" ${REVSTRING} | tr '~^_' ' '`)
           if [ ${SEMVERCHECK[0]} == "semver" ]; then
             # The semver tag already contains this files' tag
             #  so check if the tag of this file is the semver tag itself
             #  and if this is the case, replace it with the alternative tag that has been chosen before
             if [ $REVSTRING == "semver" ]; then
-                REVSTRING=(`echo ${SEMVERALTERNATIVE} | tr '[:alpha:]' ' '`)
-                REVSTRING=${REVSTRING[0]}
+                REVSTRING=${SEMVERALTERNATIVE}
             fi
             _colored_echo 4 blue "NOT YET \"semver\" tagged: ${fileToExport} version: ${REVSTRING}"
           else
             # This files' tag is not yet included in the semver tag
             #  so this files' tag is alread semver tagged
+            case ${REVSTRING} in
+                v*)
+                    REVSTRING=${REVSTRING:1}
+                    ;;
+            esac
+            _colored_echo 4 blue "already \"semver\" tagged: ${fileToExport} version: ${REVSTRING}"
+          fi
+          # check if the tagname should be cleaned before it is inserted
+          if [ $clean_tags -eq 1 ]; then
             REVSTRING=(`echo ${REVSTRING} | tr '[:alpha:]' ' '`)
             REVSTRING=${REVSTRING[0]}
-            _colored_echo 4 blue "already \"semver\" tagged: ${fileToExport} version: ${REVSTRING}"
+            _colored_echo 4 blue "final tag is: ${REVSTRING}"
           fi
           # get the date of the last modification of this file
           REVDATE=`git log -1 --format="%ai" -- ${fileToExport}`
