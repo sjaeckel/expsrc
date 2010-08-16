@@ -48,11 +48,12 @@ _usage()
   echo
   echo -e "\t--svntags\tParse more SVN tags of files"
   echo -e "\t\t\tParses the standard SVN Keywords: \$Revision\$, \$Author\$, \$Date\$ and \$Id\$"
+  echo -e "\t\t\t\tand the custom Keyword: \$LatestVersion\$"
   echo -e "\t\t\tand inserts the fitting value as done by SVN."
   echo -e "\t\t\t\te.g.: \$Revision\$ will become \$Revision: MY_TAG \$"
-  echo -e "\t\t\tThe parameter that is given to the option \"--tRev\""
-  echo -e "\t\t\twill simply be substituted by the tag!"
-  echo -e "\t\t\t\te.g.: \$Version\$ will become MY_TAG"
+  echo -e "\t\t\tThe parameter that is given to the option \"--tRev\" and the Keyword \$LatestVersion\$"
+  echo -e "\t\t\twill simply be substituted by the most actual tag!"
+  echo -e "\t\t\t\te.g.: option \"--tRev Version\" leads to replacement of \$Version\$ by MY_TAG"
   echo -e "\t\t\tThe parameter that is given to the option \"--tRev\" is considered first,"
   echo -e "\t\t\tso substitution of SVN Keywords by usage of \"--tRev\" is not recommended."
   echo
@@ -240,6 +241,24 @@ _check_parse()
   
   # If we reached this point, parsing is skipped
   _colored_echo 5 blue "Skip parsing for $1"
+}
+
+#-------------------------------------------------------------------------------
+# This function removes the trailing v of a semver-style tag
+#
+# @param   1 name of the tag to parse
+# @return  parse_semver_ret set to the parsed value
+#-------------------------------------------------------------------------------
+_parse_semver()
+{
+    local param=${1}
+    case ${param} in
+        v*)
+            parse_semver_ret=${param:1}
+            ;;
+        *)
+            parse_semver_ret=${param}
+    esac
 }
 
 ###############################################################################
@@ -448,8 +467,12 @@ for s in $subModules; do
   fi
 done
 
-# this will be the revision that is inserted in the files
+# this will be the revision that is inserted in the files when option "--svntags" is not given
 REVSTRING="${git_version}"
+
+# this will be the revision that is inserted in the files for the tag $LatestVersion$
+_parse_semver "${git_version}"
+LATEST_VERSION="${parse_semver_ret}"
 
 # Let Git tell us the list of files in the repository. In order to be able
 # to get files with spaces, read the output from git ls-files into an array.
@@ -489,12 +512,8 @@ do
             _colored_echo 0 red "semver tag occurs, but not any further tag! Exit since this can't be handled"
             exit -1
         fi
-        SEMVERALTERNATIVE=${ALLTAGS[${i}+1]}
-        case ${REVSTRING} in
-            v*)
-                SEMVERALTERNATIVE=${SEMVERALTERNATIVE:1}
-                ;;
-        esac
+        _parse_semver "${ALLTAGS[${i}+1]}"
+        SEMVERALTERNATIVE=$parse_semver_ret
         break
     fi
 done
@@ -566,7 +585,8 @@ do
                              -e 's@\$Revision.*\$@\$Revision: '"$REVSTRING"' \$@Ig' \
                                 -e 's@\$Date.*\$@'"\$Date: $REVDATE \$"'@Ig' \
                                     -e 's@\$Id.*\$@'"\$Id: $fileToExport $REVSTRING $REVDATE $REVAUTHOR \$"'@Ig' \
-                                        > "${outFolder}/${fileToExport}"
+                                        -e 's@\$LatestVersion.*\$@'"$LATEST_VERSION"'@Ig' \
+                                            > "${outFolder}/${fileToExport}"
         else
           SEDSTRING='s/\$'"$tagRevision"'.*\$/'"$REVSTRING"'/Ig'
           # Read the file out of the repository and replace the $Revision$ tag with 'MY_TAG'
