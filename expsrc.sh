@@ -463,6 +463,12 @@ for s in $subModules; do
         locParseRulesCmdLine="${locParseRulesCmdLine} --svntags"
     fi
     
+    # If cleaning tags is disabled, disable it in submodules as well
+    if [ $clean_tags -eq 0 ]
+    then
+        locParseRulesCmdLine="${locParseRulesCmdLine} --original-tags"
+    fi
+    
     "$THIS" -v "$verb_level" $locParseRulesCmdLine "--tRev" "${tagRevision}" "-o" "${outFolder}/${s}" "-i" "${PWD}/${s}"
   fi
 done
