@@ -62,6 +62,8 @@ _usage()
   echo -e "\t\t\tthis option disables this behavior. Nonetheless, tags that are already"
   echo -e "\t\t\tin semver style will have removed the leading 'v'!"
   echo
+  echo -e "\t--no-fetch\t\tDo not fetch the repository initially."
+  echo  
   echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
   echo
   echo -e "\t-e\t\tOpen explorer window after export"
@@ -206,6 +208,10 @@ _check_params()
         "--original-tags")
                 clean_tags=0
                 check_params_ret=1;;
+                
+        "--no-fetch")
+                no_fetch=1
+                check_params_ret=1;;
         *)
                 _colored_echo 1 red Unknown option $1
                 _usage
@@ -312,6 +318,9 @@ tagRevision="Version"
 # Default behavior of cleaning tags is on
 clean_tags=1
 
+# By default fetch the repository from the server before exporting
+no_fetch=0
+
 ###############################################################################
 #                                  MAIN BODY                                  #
 ###############################################################################
@@ -384,8 +393,13 @@ test -z "$(git diff-index --name-only HEAD --)" ||
 # Update the index of the current working tree. This is important to get the
 # tags and to generate the version string correctly.
 # If it fails, a warning is issued
-if [ `git fetch --tags 2>&1 | grep -c "fatal"` != "0" ]; then
-  _colored_echo 1 yellow "Warning: git fetch failed, continuing with possibly outdated version"
+if [ $no_fetch -lt 1 ]
+then
+  if [ `git fetch --tags 2>&1 | grep -c "fatal"` != "0" ]; then
+    _colored_echo 1 yellow "Warning: git fetch failed, continuing with possibly outdated version"
+  fi
+else
+  _colored_echo 1 yellow "Fetching git git repository skipped"
 fi
   
 # get version string
