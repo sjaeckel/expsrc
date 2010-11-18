@@ -62,9 +62,9 @@ _usage()
   echo -e "\t\t\tthis option disables this behavior. Nonetheless, tags that are already"
   echo -e "\t\t\tin semver style will have removed the leading 'v'!"
   echo
-  echo -e "\t--no-fetch\t\tDo not fetch the repository initially."
+  echo -e "\t--no-fetch\tDo not fetch the repository initially."
   echo  
-  echo -e "\t--myself\t\tAllow export of myself, only required when this script should be exported."
+  echo -e "\t--myself\tAllow export of myself, only required when this script should be exported."
   echo  
   echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
   echo
@@ -158,12 +158,8 @@ _check_params()
     option=$1
     
     case $option in
-        "-h")
-                _usage
-                exit 0;;
-        "--help")
-                _usage
-                exit 0;;
+        "-h" | "--help")
+                _usage;;
                 
         "--repo" | "-i")
                 # convert the path to an absolute path and save it
@@ -221,8 +217,7 @@ _check_params()
                 
         *)
                 _colored_echo 1 red Unknown option $1
-                _usage
-                exit -1;;
+                _usage;;
     esac
 
 }
