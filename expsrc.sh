@@ -5,7 +5,7 @@
 _usage() 
 {
   echo -e
-  echo -e "${0##*/} version `git describe --tags --always`"
+  echo -e "expsrc.sh version $ExpSrcVersion$"
   echo -e "Copyright Steinbeis Transfer Center Embedded Design and Networking, 2010"
   echo
   echo -e "This script exports the source of a repository with revision string in the code"
@@ -28,7 +28,7 @@ _usage()
   echo -e "\t\t\tInstead of specifying configuration options on the command line"
   echo -e "\t\t\ta configuration file can be placed in the root directory of"
   echo -e "\t\t\tof the given project to export the sources. The default name"
-  echo -e "\t\t\tof this file is called $expsrc_config. If an alternative file"
+  echo -e "\t\t\tof this file is called \"expsrc.cfg\". If an alternative file"
   echo -e "\t\t\tis to be used, this parameter can be given with the given file name."
   echo
   echo -e "\t--override-cfg\tDo not use a config file"
