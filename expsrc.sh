@@ -575,7 +575,7 @@ do
           # get the SHA1 commit ID of the last modification of this file
           REVSTRING=`git log -1 --format="%H" -- ${fileToExport}`
           # get the first tag that includes this commit
-          REVSTRING=(`git describe --always --contains $REVSTRING | tr '~^_' ' '`)
+          REVSTRING=(`git describe --always --contains ${REVSTRING}`)
           REVSTRING=${REVSTRING[0]}
           # Check if the semver tag already contains the tag of this file
           SEMVERCHECK=(`git describe --always --contains --match "semver" ${REVSTRING} | tr '~^_' ' '`)
@@ -599,7 +599,7 @@ do
           fi
           # check if the tagname should be cleaned before it is inserted
           if [ $clean_tags -eq 1 ]; then
-            REVSTRING=(`echo ${REVSTRING} | tr '[:alpha:]' ' '`)
+            REVSTRING=(`echo ${REVSTRING} | tr '~^_[:alpha:]' ' '`)
             REVSTRING=${REVSTRING[0]}
             _colored_echo 4 blue "final tag is: ${REVSTRING}"
           fi
