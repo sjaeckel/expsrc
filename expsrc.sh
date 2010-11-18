@@ -352,15 +352,21 @@ then
         
         if [[ $option == -* ]]
         then
+            _colored_echo 5 blue Process option $option
             _check_params "$option" "$param"
 
             i=$((check_params_ret+1))
             shift $check_params_ret
         else
-            break;
+            _colored_echo 0 red Invalid option $option
+            let i=i+1
+            shift 1
+            continue;
         fi
 
     done
+else
+    _colored_echo 5 blue "no parameters given, continue"
 fi
 
 # continue working now in the input folder
@@ -436,6 +442,7 @@ case "$#" in
     fi
     ;;
   *)
+    _colored_echo 0 red "When we're here, we should have no more parameters"
     _usage
     ;;
 esac
