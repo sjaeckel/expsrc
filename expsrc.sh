@@ -64,6 +64,8 @@ _usage()
   echo
   echo -e "\t--no-fetch\t\tDo not fetch the repository initially."
   echo  
+  echo -e "\t--myself\t\tAllow export of myself, only required when this script should be exported."
+  echo  
   echo -e "\t-v\t\tVerbosity level, 0=completely off, 1=default, 5=maximum"
   echo
   echo -e "\t-e\t\tOpen explorer window after export"
@@ -212,6 +214,11 @@ _check_params()
         "--no-fetch")
                 no_fetch=1
                 check_params_ret=1;;
+                
+        "--myself")
+                export_myself=1
+                check_params_ret=1;;
+                
         *)
                 _colored_echo 1 red Unknown option $1
                 _usage
@@ -320,6 +327,9 @@ clean_tags=1
 
 # By default fetch the repository from the server before exporting
 no_fetch=0
+
+# By default we don't want to export ourself, but sometimes...
+export_myself=0
 
 ###############################################################################
 #                                  MAIN BODY                                  #
@@ -544,7 +554,7 @@ do
   
   fileToExport=${filesToExport[${i}]}
   
-  if [ ! -n "$(echo ${fileToExport} | grep "expsrc")" ] && [ ! -d "${fileToExport%}" ]; then
+  if ( [ ! -n "$(echo ${fileToExport} | grep "expsrc")" ] || [ $export_myself -eq 1 ] ) && [ ! -d "${fileToExport%}" ]; then
     
     # check if we must generate directory before
     if [ -d "${fileToExport%/*}" ] && [ ! -e "${outFolder}/${fileToExport%/*}" ]; then
