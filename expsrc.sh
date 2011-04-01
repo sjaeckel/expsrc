@@ -350,7 +350,7 @@ then
             _colored_echo 5 blue Process option $option
             _check_params "$option" "$param"
 
-            i=$((check_params_ret+1))
+            let i=i+$((check_params_ret))
             shift $check_params_ret
         else
             _colored_echo 0 red Invalid option $option
